@@ -2,13 +2,13 @@
 
 namespace OTGH\AccessControl\ModbusAdapter\Services;
 
-use App\Enums\AccessControl\AccessBindingActionKey;
-use App\Models\Access\Area;
-use App\Models\Hardware\AdapterBinding;
-use App\Models\Hardware\Lock;
-use App\Models\Hardware\Reader;
-use App\Models\Hardware\Source;
 use Illuminate\Support\Facades\Cache;
+use OTGH\AccessControl\Core\Enums\AccessControl\AccessBindingActionKey;
+use OTGH\AccessControl\Core\Models\Access\Area;
+use OTGH\AccessControl\Core\Models\Hardware\AdapterBinding;
+use OTGH\AccessControl\Core\Models\Hardware\Lock;
+use OTGH\AccessControl\Core\Models\Hardware\Reader;
+use OTGH\AccessControl\Core\Models\Hardware\Source;
 use OTGH\AccessControl\ModbusAdapter\Console\Commands\MonitorModbusSources;
 use OTGH\AccessControl\ModbusAdapter\Modbus\ModbusSourceConfigResolver;
 use OTGH\AccessControl\ModbusAdapter\Modbus\ModbusTcpClient;

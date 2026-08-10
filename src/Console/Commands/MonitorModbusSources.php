@@ -2,12 +2,12 @@
 
 namespace OTGH\AccessControl\ModbusAdapter\Console\Commands;
 
-use App\Models\Hardware\Source;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use OTGH\AccessControl\Core\Models\Hardware\Source;
 use OTGH\AccessControl\ModbusAdapter\Modbus\ModbusSourceConfigResolver;
 use OTGH\AccessControl\ModbusAdapter\Modbus\ModbusTcpClient;
 use OTGH\AccessControl\ModbusAdapter\ModbusInputActionDispatcher;

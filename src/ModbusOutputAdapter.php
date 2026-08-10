@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OTGH\AccessControl\ModbusAdapter;
 
-use App\Services\AccessControl\OutputAdapterInterface;
+use OTGH\AccessControl\Core\Services\AccessControl\OutputAdapterInterface;
 use OTGH\AccessControl\ModbusAdapter\Modbus\ModbusTcpClient;
 use RuntimeException;
 

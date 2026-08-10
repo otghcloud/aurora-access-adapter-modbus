@@ -2,12 +2,12 @@
 
 namespace OTGH\AccessControl\ModbusAdapter\Http\Controllers\Admin\Health;
 
-use App\Enums\AccessControl\AccessBindingActionKey;
-use App\Http\Controllers\Controller;
-use App\Models\Hardware\Source;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use OTGH\AccessControl\Core\Enums\AccessControl\AccessBindingActionKey;
+use OTGH\AccessControl\Core\Http\Controllers\Controller;
+use OTGH\AccessControl\Core\Models\Hardware\Source;
 use OTGH\AccessControl\ModbusAdapter\Modbus\ModbusSourceConfigResolver;
 use OTGH\AccessControl\ModbusAdapter\ModbusOutputAdapter;
 use OTGH\AccessControl\ModbusAdapter\Services\ModbusInputDiagnosticsService;

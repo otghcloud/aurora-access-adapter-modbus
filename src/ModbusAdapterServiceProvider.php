@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace OTGH\AccessControl\ModbusAdapter;
 
-use App\Models\Hardware\Source;
-use App\Services\AccessControl\AccessControlCapabilityRegistry;
-use App\Services\AccessControl\DiagnosticsNavigationRegistry;
-use App\Services\AccessControl\HealthCheckRegistry;
-use App\Services\AccessControl\OutputAdapterRegistry;
-use App\Services\AccessControl\SourceConnectionTesterRegistry;
-use App\Services\Supervisor\SupervisorProgramRegistry;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use OTGH\AccessControl\Core\Models\Hardware\Source;
+use OTGH\AccessControl\Core\Services\AccessControl\AccessControlCapabilityRegistry;
+use OTGH\AccessControl\Core\Services\AccessControl\DiagnosticsNavigationRegistry;
+use OTGH\AccessControl\Core\Services\AccessControl\HealthCheckRegistry;
+use OTGH\AccessControl\Core\Services\AccessControl\OutputAdapterRegistry;
+use OTGH\AccessControl\Core\Services\AccessControl\SourceConnectionTesterRegistry;
+use OTGH\AccessControl\Core\Services\Supervisor\SupervisorProgramRegistry;
 use OTGH\AccessControl\ModbusAdapter\Console\Commands\ModbusInputDiagnostics;
 use OTGH\AccessControl\ModbusAdapter\Console\Commands\MonitorModbusSources;
 use OTGH\AccessControl\ModbusAdapter\Modbus\ModbusSourceConfigResolver;
