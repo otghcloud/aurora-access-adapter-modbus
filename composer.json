@@ -1,0 +1,23 @@
+{
+    "name": "otghcloud/aurora-access-adapter-modbus",
+    "description": "Modbus adapter integration package for Access Control",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "otghcloud/aurora-access-core": "*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "OTGH\\AccessControl\\ModbusAdapter\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "OTGH\\AccessControl\\ModbusAdapter\\ModbusAdapterServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
