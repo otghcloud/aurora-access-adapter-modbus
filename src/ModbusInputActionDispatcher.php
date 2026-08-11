@@ -88,7 +88,10 @@ class ModbusInputActionDispatcher
                     $sensor->forceFill(['state' => $state])->save();
                 }
 
-                app(AccessControlMqttPublisher::class)->publishSensorState($sensor->fresh());
+                app(AccessControlMqttPublisher::class)->publishSensorState(
+                    $sensor->fresh(),
+                    $this->sensorMqttPublishOptionsFromBinding($binding),
+                );
 
                 Log::info('modbus.input.sensor_state.updated', [
                     'source_id' => $source->id,
@@ -267,6 +270,55 @@ class ModbusInputActionDispatcher
         }
 
         return Sensor::query()->find($binding->target_id);
+    }
+
+    /**
+     * @return array{periodic_updates_enabled?:bool,periodic_update_frequency_seconds?:int}
+     */
+    private function sensorMqttPublishOptionsFromBinding(AdapterBinding $binding): array
+    {
+        $config = is_array($binding->config) ? $binding->config : [];
+        $options = [];
+
+        $enabledRaw = data_get($config, 'mqtt.periodic_updates_enabled', data_get($config, 'mqtt_periodic_updates_enabled'));
+        $enabled = $this->nullableBool($enabledRaw);
+        if (is_bool($enabled)) {
+            $options['periodic_updates_enabled'] = $enabled;
+        }
+
+        $frequencyRaw = data_get($config, 'mqtt.periodic_update_frequency_seconds', data_get($config, 'mqtt_periodic_update_frequency_seconds'));
+        if (is_numeric($frequencyRaw)) {
+            $options['periodic_update_frequency_seconds'] = max(1, (int) $frequencyRaw);
+        }
+
+        return $options;
+    }
+
+    private function nullableBool(mixed $value): ?bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_numeric($value)) {
+            return (int) $value === 1;
+        }
+
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        $normalized = strtolower(trim((string) $value));
+
+        if (in_array($normalized, ['1', 'true', 'yes', 'on'], true)) {
+            return true;
+        }
+
+        if (in_array($normalized, ['0', 'false', 'no', 'off'], true)) {
+            return false;
+        }
+
+        return null;
     }
 
     private function resolveReaderFromLock(int $lockId): ?Reader
