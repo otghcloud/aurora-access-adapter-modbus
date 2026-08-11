@@ -8,6 +8,7 @@ use OTGH\AccessControl\Core\Models\Access\Area;
 use OTGH\AccessControl\Core\Models\Hardware\AdapterBinding;
 use OTGH\AccessControl\Core\Models\Hardware\Lock;
 use OTGH\AccessControl\Core\Models\Hardware\Reader;
+use OTGH\AccessControl\Core\Models\Hardware\Sensor;
 use OTGH\AccessControl\Core\Models\Hardware\Source;
 use OTGH\AccessControl\ModbusAdapter\Console\Commands\MonitorModbusSources;
 use OTGH\AccessControl\ModbusAdapter\Modbus\ModbusSourceConfigResolver;
@@ -101,6 +102,14 @@ class ModbusInputDiagnosticsService
         $bindingRows = $bindings->map(function (AdapterBinding $binding): array {
             $lastSeen = Cache::get(ModbusInputActionDispatcher::lastSeenCacheKey((int) $binding->id));
             $actionKey = AccessBindingActionKey::fromStored($binding->action_key);
+            $edgeActive = Cache::get(ModbusInputActionDispatcher::edgeStateCacheKey((int) $binding->id));
+            $lastSeenActive = is_array($lastSeen) ? ($lastSeen['active'] ?? null) : null;
+            $effectiveActive = is_bool($lastSeenActive)
+                ? $lastSeenActive
+                : (is_bool($edgeActive) ? $edgeActive : null);
+            $stateSource = is_bool($lastSeenActive)
+                ? 'live'
+                : (is_bool($edgeActive) ? 'edge' : null);
 
             return [
                 'id' => (int) $binding->id,
@@ -116,7 +125,9 @@ class ModbusInputDiagnosticsService
                 'target_type' => $binding->target_type,
                 'target_id' => (int) $binding->target_id,
                 'target_label' => $this->resolveTargetLabel($binding->target_type, (int) $binding->target_id),
-                'edge_active' => Cache::get(ModbusInputActionDispatcher::edgeStateCacheKey((int) $binding->id)),
+                'edge_active' => $edgeActive,
+                'effective_active' => $effectiveActive,
+                'state_source' => $stateSource,
                 'last_seen' => is_array($lastSeen) ? $lastSeen : null,
                 'last_dispatch_at' => Cache::get(ModbusInputActionDispatcher::lastDispatchAtCacheKey((int) $binding->id)),
                 'dispatch_count' => (int) Cache::get(ModbusInputActionDispatcher::dispatchCountCacheKey((int) $binding->id), 0),
@@ -137,8 +148,20 @@ class ModbusInputDiagnosticsService
             'reader' => $this->readerLabel($targetId),
             'lock' => $this->lockLabel($targetId),
             'area' => $this->roomLabel($targetId),
+            'sensor' => $this->sensorLabel($targetId),
             default => null,
         };
+    }
+
+    private function sensorLabel(int $sensorId): ?string
+    {
+        $sensor = Sensor::query()->find($sensorId);
+
+        if (! $sensor instanceof Sensor) {
+            return null;
+        }
+
+        return $sensor->name.' ('.$sensor->identifier.')';
     }
 
     private function readerLabel(int $readerId): ?string
