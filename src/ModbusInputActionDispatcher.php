@@ -13,7 +13,9 @@ use OTGH\AccessControl\Core\Models\Access\Event;
 use OTGH\AccessControl\Core\Models\Hardware\AdapterBinding;
 use OTGH\AccessControl\Core\Models\Hardware\Lock;
 use OTGH\AccessControl\Core\Models\Hardware\Reader;
+use OTGH\AccessControl\Core\Models\Hardware\Sensor;
 use OTGH\AccessControl\Core\Models\Hardware\Source;
+use OTGH\AccessControl\Core\Services\AccessControlMqttPublisher;
 use OTGH\AccessControl\Core\Support\SignalValueMapper;
 
 class ModbusInputActionDispatcher
@@ -32,6 +34,7 @@ class ModbusInputActionDispatcher
             ->whereIn('action_key', AccessBindingActionKey::queryCandidatesFor([
                 AccessBindingActionKey::EXIT_REQUEST,
                 AccessBindingActionKey::EMERGENCY_EXIT_REQUEST,
+                AccessBindingActionKey::SENSOR_STATE,
             ]))
             ->get();
 
@@ -60,7 +63,48 @@ class ModbusInputActionDispatcher
                 'active' => $isActive,
             ], now()->addDay());
 
-            if ($isActive === null || ! $this->isRisingEdge((int) $binding->id, $isActive)) {
+            if ($isActive === null) {
+                continue;
+            }
+
+            $resolvedAction = AccessBindingActionKey::fromStored($binding->action_key);
+            if ($resolvedAction === AccessBindingActionKey::SENSOR_STATE) {
+                $sensor = $this->resolveSensorForBinding($binding);
+                if (! $sensor instanceof Sensor) {
+                    Log::warning('modbus.input.sensor_state.sensor_not_resolved', [
+                        'binding_id' => $binding->id,
+                        'target_type' => $binding->target_type,
+                        'target_id' => $binding->target_id,
+                        'source_id' => $source->id,
+                        'channel' => $binding->channel,
+                        'address' => $address,
+                    ]);
+
+                    continue;
+                }
+
+                $state = (bool) $isActive;
+                if ((bool) $sensor->state !== $state) {
+                    $sensor->forceFill(['state' => $state])->save();
+                }
+
+                app(AccessControlMqttPublisher::class)->publishSensorState($sensor->fresh());
+
+                Log::info('modbus.input.sensor_state.updated', [
+                    'source_id' => $source->id,
+                    'binding_id' => $binding->id,
+                    'sensor_id' => $sensor->id,
+                    'sensor_identifier' => $sensor->identifier,
+                    'state' => $state,
+                    'channel' => $binding->channel,
+                    'address' => $address,
+                    'raw' => $raw,
+                ]);
+
+                continue;
+            }
+
+            if (! $this->isRisingEdge((int) $binding->id, $isActive)) {
                 continue;
             }
 
@@ -78,7 +122,6 @@ class ModbusInputActionDispatcher
                 continue;
             }
 
-            $resolvedAction = AccessBindingActionKey::fromStored($binding->action_key);
             $isEmergency = $resolvedAction === AccessBindingActionKey::EMERGENCY_EXIT_REQUEST;
             $status = $isEmergency ? 'emergency_exit_request_detected' : 'exit_request_detected';
             $reason = $isEmergency
@@ -215,6 +258,15 @@ class ModbusInputActionDispatcher
             'area' => $this->resolveReaderFromRoom((int) $binding->target_id),
             default => null,
         };
+    }
+
+    private function resolveSensorForBinding(AdapterBinding $binding): ?Sensor
+    {
+        if ($binding->target_type !== 'sensor') {
+            return null;
+        }
+
+        return Sensor::query()->find($binding->target_id);
     }
 
     private function resolveReaderFromLock(int $lockId): ?Reader
