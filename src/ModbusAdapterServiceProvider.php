@@ -9,7 +9,6 @@ use Illuminate\Support\ServiceProvider;
 use OTGH\AccessControl\Core\Models\Hardware\Source;
 use OTGH\AccessControl\Core\Services\AccessControl\AccessControlCapabilityRegistry;
 use OTGH\AccessControl\Core\Services\AccessControl\DiagnosticsNavigationRegistry;
-use OTGH\AccessControl\Core\Services\AccessControl\HealthCheckRegistry;
 use OTGH\AccessControl\Core\Services\AccessControl\OutputAdapterRegistry;
 use OTGH\AccessControl\Core\Services\AccessControl\SourceConnectionTesterRegistry;
 use OTGH\AccessControl\Core\Services\Supervisor\SupervisorProgramRegistry;
@@ -79,29 +78,6 @@ CONF];
             });
         });
 
-        $this->app->afterResolving(HealthCheckRegistry::class, function (HealthCheckRegistry $registry): void {
-            $registry->register(function ($service, ?string $readerIdentifier = null): array {
-                $matches = function_exists('shell_exec')
-                    ? shell_exec('pgrep -fa "artisan app:monitor-modbus-sources" 2>/dev/null')
-                    : null;
-
-                if (! is_string($matches) || trim($matches) === '') {
-                    return [[
-                        'name' => 'Modbus monitor process match',
-                        'status' => 'WARN',
-                        'details' => 'No app:monitor-modbus-sources process found via pgrep',
-                    ]];
-                }
-
-                $count = count(array_filter(array_map('trim', explode("\n", trim($matches)))));
-
-                return [[
-                    'name' => 'Modbus monitor process match',
-                    'status' => 'PASS',
-                    'details' => sprintf('pgrep matches=%d', $count),
-                ]];
-            });
-        });
     }
 
     public function boot(): void
